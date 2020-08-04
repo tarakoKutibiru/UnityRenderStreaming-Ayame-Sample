@@ -1,5 +1,7 @@
 # UnityRenderStreaming-Ayame-Sample
 
+![image](https://github.com/tarakoKutibiru/UnityRenderStreaming-Ayame-Sample/blob/image/Image/UnityRenderStreaming-Ayame-Sample.gif?raw=true)
+
 # これは何
 
 Unity Render Streamingのシグナリング処理を、株式会社時雨堂様のAyameというシグナリングサーバに対応させてみたものです。
@@ -10,6 +12,8 @@ Unity Render Streamingのシグナリング処理を、株式会社時雨堂様�
 2.[Ayame Lite](https://ayame-lite.shiguredo.jp/beta)にアクセスしてサインアップ。
 
 3.Ayame Liteに書いてあるシグナリングURLとシグナリングキーをコピーして、Render Streamingコンポーネントに貼り付けます。
+
+![image](https://github.com/tarakoKutibiru/UnityRenderStreaming-Ayame-Sample/blob/image/Image/SignalingKey.png?raw=true)
 
 4.RoomIDをフォーマットに沿って適当に作成してRender Streamingコンポーネントに貼り付けます。
 
