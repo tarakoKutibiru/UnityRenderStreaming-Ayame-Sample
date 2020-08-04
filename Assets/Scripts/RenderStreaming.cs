@@ -1,10 +1,11 @@
+using Ayame.Signaling;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
-using Unity.WebRTC;
 using System.Text.RegularExpressions;
 using Unity.RenderStreaming.Signaling;
+using Unity.WebRTC;
+using UnityEngine;
 using UnityEngine.InputSystem.EnhancedTouch;
 
 namespace Unity.RenderStreaming
@@ -28,6 +29,12 @@ namespace Unity.RenderStreaming
         [SerializeField, Tooltip("Address for signaling server")]
         private string urlSignaling = "http://localhost";
 
+        [SerializeField, Tooltip("Ayame Signaling Key")]
+        private string signalingKey = "";
+
+        [SerializeField, Tooltip("Ayame RoomId")]
+        private string roomId = "";
+
         [SerializeField, Tooltip("Array to set your own STUN/TURN servers")]
         private RTCIceServer[] iceServers = new RTCIceServer[]
         {
@@ -47,7 +54,7 @@ namespace Unity.RenderStreaming
         private ButtonClickElement[] arrayButtonClickEvent;
 #pragma warning restore 0649
 
-        private ISignaling m_signaling;
+        private AyameSignaling m_signaling;
         private readonly Dictionary<string, RTCPeerConnection> m_mapConnectionIdAndPeer = new Dictionary<string, RTCPeerConnection>();
         private readonly Dictionary<RTCPeerConnection, DataChannelDictionary> m_mapPeerAndChannelDictionary = new Dictionary<RTCPeerConnection, DataChannelDictionary>();
         private readonly Dictionary<RemoteInput, SimpleCameraController> m_remoteInputAndCameraController = new Dictionary<RemoteInput, SimpleCameraController>();
@@ -96,15 +103,10 @@ namespace Unity.RenderStreaming
         {
             if (this.m_signaling == null)
             {
-                if (urlSignaling.StartsWith("ws"))
-                {
-                    this.m_signaling = new WebSocketSignaling(urlSignaling, interval);
-                }
-                else
-                {
-                    this.m_signaling = new HttpSignaling(urlSignaling, interval);
-                }
+                this.m_signaling = new AyameSignaling(urlSignaling, signalingKey, roomId, interval);
 
+                this.m_signaling.OnAccept += OnAccept;
+                this.m_signaling.OnAnswer += OnAnswer;
                 this.m_signaling.OnOffer += OnOffer;
                 this.m_signaling.OnIceCandidate += OnIceCandidate;
             }
@@ -141,6 +143,43 @@ namespace Unity.RenderStreaming
             }
         }
 
+        RTCConfiguration GetSelectedSdpSemantics()
+        {
+            RTCConfiguration config = default;
+            var rtcIceServers = new List<RTCIceServer>();
+
+            foreach (var iceServer in this.m_signaling.m_acceptMessage.iceServers)
+            {
+                RTCIceServer rtcIceServer = new RTCIceServer();
+                rtcIceServer.urls = iceServer.urls.ToArray();
+                rtcIceServer.username = iceServer.username;
+                rtcIceServer.credential = iceServer.credential;
+                rtcIceServer.credentialType = RTCIceCredentialType.OAuth;
+
+                rtcIceServers.Add(rtcIceServer);
+            }
+
+            config.iceServers = rtcIceServers.ToArray();
+
+            return config;
+        }
+
+        void OnAccept(AyameSignaling ayameSignaling)
+        {
+            AcceptMessage acceptMessage = ayameSignaling.m_acceptMessage;
+
+            bool shouldSendOffer = acceptMessage.isExistClient;
+
+            var configuration = GetSelectedSdpSemantics();
+            this.iceServers = configuration.iceServers;
+            m_conf.iceServers = this.iceServers;
+
+            // wait Offer
+            if (!shouldSendOffer) return;
+
+            // TODO: Send Offer
+        }
+
         void OnOffer(ISignaling signaling, DescData e)
         {
             RTCSessionDescription _desc;
@@ -162,7 +201,7 @@ namespace Unity.RenderStreaming
             });
             pc.OnIceConnectionChange = new DelegateOnIceConnectionChange(state =>
             {
-                if(state == RTCIceConnectionState.Disconnected)
+                if (state == RTCIceConnectionState.Disconnected)
                 {
                     pc.Close();
                     m_mapConnectionIdAndPeer.Remove(e.connectionId);
@@ -176,7 +215,7 @@ namespace Unity.RenderStreaming
             {
                 pc.AddTrack(track);
             }
-            foreach(var track in m_audioStream.GetTracks())
+            foreach (var track in m_audioStream.GetTracks())
             {
                 pc.AddTrack(track);
             }
@@ -204,6 +243,11 @@ namespace Unity.RenderStreaming
             }
 
             signaling.SendAnswer(connectionId, desc);
+        }
+
+        void OnAnswer(ISignaling signaling, DescData e)
+        {
+            // TODO: Answer sdp SetRemoteDescription 
         }
 
         void OnIceCandidate(ISignaling signaling, CandidateData e)
@@ -249,13 +293,13 @@ namespace Unity.RenderStreaming
             SimpleCameraController controller = m_listController
                 .FirstOrDefault(_controller => !m_remoteInputAndCameraController.ContainsValue(_controller));
 
-            if(controller != null)
+            if (controller != null)
             {
                 controller.SetInput(input);
                 m_remoteInputAndCameraController.Add(input, controller);
 
                 byte index = (byte)m_listController.IndexOf(controller);
-                byte[] bytes = {(byte)UnityEventType.SwitchVideo, index};
+                byte[] bytes = { (byte)UnityEventType.SwitchVideo, index };
                 channel.Send(bytes);
             }
         }
