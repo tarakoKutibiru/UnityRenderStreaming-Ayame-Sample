@@ -28,3 +28,9 @@ Unity Render Streamingのシグナリング処理を、株式会社時雨堂様�
     https://openayame.github.io/ayame-web-sdk-samples/recvonly.html?roomId=<ROOMID>&signalingKey=<SIGNALING_KEY>
 
 6.Unityを実行したあと、Ayame-Web-SDK-Smaple側の接続ボタンを押すと、シグナリングが実行されて、P2P通信が始まります。
+
+# Discord
+
+UnityでAyameを利用する人のためのコミュニティを作ってみました。私自身がサポートする可能性は低いですが、開発者同士の議論の場として使って頂けると嬉しいです。
+
+[Discord](https://discord.gg/wGSG6SjkPA)
