@@ -29,6 +29,10 @@ Unity Render Streamingのシグナリング処理を、株式会社時雨堂様�
 
 6.Unityを実行したあと、Ayame-Web-SDK-Smaple側の接続ボタンを押すと、シグナリングが実行されて、P2P通信が始まります。
 
+# 関連
+映像の受信側をReact Nativeで作成してみました。
+https://github.com/tarakoKutibiru/UnityRenderStreaming-Ayame-ReactNative-Sample
+
 # Discord
 
 UnityでAyameを利用する人のためのコミュニティを作ってみました。私自身がサポートする可能性は低いですが、開発者同士の議論の場として使って頂けると嬉しいです。
