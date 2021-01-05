@@ -11,19 +11,19 @@ namespace Unity.RenderStreaming.Signaling
     public class HttpSignaling : ISignaling
     {
         private string m_url;
-        private float m_timeout;
-        private bool m_running;
+        private float  m_timeout;
+        private bool   m_running;
         private Thread m_signalingThread;
 
         private string m_sessionId;
         private string m_connectionId;
-        private long m_lastTimeGetOfferRequest;
-        private long m_lastTimeGetCandidateRequest;
+        private long   m_lastTimeGetOfferRequest;
+        private long   m_lastTimeGetCandidateRequest;
 
 
         public HttpSignaling(string url, float timeout)
         {
-            m_url = url;
+            m_url     = url;
             m_timeout = timeout;
 
             if (m_url.StartsWith("https"))
@@ -35,7 +35,7 @@ namespace Unity.RenderStreaming.Signaling
 
         public void Start()
         {
-            m_running = true;
+            m_running         = true;
             m_signalingThread = new Thread(HTTPPooling);
             m_signalingThread.Start();
         }
@@ -61,8 +61,8 @@ namespace Unity.RenderStreaming.Signaling
         {
             DescData data = new DescData();
             data.connectionId = connectionId;
-            data.sdp = answer.sdp;
-            data.type = "answer";
+            data.sdp          = answer.sdp;
+            data.type         = "answer";
 
             HTTPPost("signaling/answer", data);
         }
@@ -70,10 +70,10 @@ namespace Unity.RenderStreaming.Signaling
         public void SendCandidate(string connectionId, RTCIceCandidate candidate)
         {
             CandidateData data = new CandidateData();
-            data.connectionId = connectionId;
-            data.candidate = candidate.candidate;
-            data.sdpMLineIndex = candidate.sdpMLineIndex;
-            data.sdpMid = candidate.sdpMid;
+            data.connectionId  = connectionId;
+            data.candidate     = candidate.Candidate;
+            data.sdpMLineIndex = candidate.SdpMLineIndex ?? 0;
+            data.sdpMid        = candidate.SdpMid;
 
             HTTPPost("signaling/candidate", data);
         }
@@ -81,7 +81,7 @@ namespace Unity.RenderStreaming.Signaling
         private void HTTPPooling()
         {
             // ignore messages arrived before 30 secs ago
-            m_lastTimeGetOfferRequest = DateTime.UtcNow.Millisecond - 30000;
+            m_lastTimeGetOfferRequest     = DateTime.UtcNow.Millisecond - 30000;
             m_lastTimeGetCandidateRequest = DateTime.UtcNow.Millisecond - 30000;
 
 
@@ -98,7 +98,7 @@ namespace Unity.RenderStreaming.Signaling
                     HTTPGetOffers();
                     HTTPGetCandidates();
                 }
-                catch (Exception e)
+                catch(Exception e)
                 {
                     Debug.LogError("Signaling: HTTP polling error : " + e);
                 }
@@ -127,7 +127,7 @@ namespace Unity.RenderStreaming.Signaling
                     response.Close();
                 }
             }
-            catch (Exception e)
+            catch(Exception e)
             {
                 Debug.LogError("Signaling: HTTP request error " + e);
             }
@@ -144,8 +144,8 @@ namespace Unity.RenderStreaming.Signaling
 
             using (Stream dataStream = response.GetResponseStream())
             {
-                StreamReader reader = new StreamReader(dataStream);
-                string responseFromServer = reader.ReadToEnd();
+                StreamReader reader             = new StreamReader(dataStream);
+                string       responseFromServer = reader.ReadToEnd();
                 obj = JsonUtility.FromJson<T>(responseFromServer);
             }
 
@@ -175,9 +175,9 @@ namespace Unity.RenderStreaming.Signaling
         private bool HTTPCreate()
         {
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create($"{m_url}/signaling");
-            request.Method = "PUT";
+            request.Method      = "PUT";
             request.ContentType = "application/json";
-            request.KeepAlive = false;
+            request.KeepAlive   = false;
 
             Debug.Log($"Signaling: Connecting HTTP {m_url}");
 
@@ -198,9 +198,9 @@ namespace Unity.RenderStreaming.Signaling
         private bool HTTPDelete()
         {
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create($"{m_url}/signaling");
-            request.Method = "DELETE";
+            request.Method      = "DELETE";
             request.ContentType = "application/json";
-            request.KeepAlive = false;
+            request.KeepAlive   = false;
 
             Debug.Log($"Signaling: Removing HTTP connection from {m_url}");
 
@@ -209,13 +209,13 @@ namespace Unity.RenderStreaming.Signaling
 
         private bool HTTPPost(string path, object data)
         {
-            string str = JsonUtility.ToJson(data);
+            string str   = JsonUtility.ToJson(data);
             byte[] bytes = new System.Text.UTF8Encoding().GetBytes(str);
 
             Debug.Log("Signaling: Posting HTTP data: " + str);
 
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create($"{m_url}/{path}");
-            request.Method = "POST";
+            request.Method      = "POST";
             request.ContentType = "application/json";
             request.Headers.Add("Session-Id", m_sessionId);
             request.KeepAlive = false;
@@ -233,18 +233,18 @@ namespace Unity.RenderStreaming.Signaling
         {
             HttpWebRequest request =
                 (HttpWebRequest)WebRequest.Create($"{m_url}/signaling/offer?fromtime={m_lastTimeGetOfferRequest}");
-            request.Method = "GET";
+            request.Method      = "GET";
             request.ContentType = "application/json";
             request.Headers.Add("Session-Id", m_sessionId);
             request.KeepAlive = false;
 
-            HttpWebResponse response = HTTPGetResponse(request);
-            OfferResDataList list = HTTPParseJsonResponse<OfferResDataList>(response);
+            HttpWebResponse  response = HTTPGetResponse(request);
+            OfferResDataList list     = HTTPParseJsonResponse<OfferResDataList>(response);
 
             if (list == null) return false;
 
             m_lastTimeGetOfferRequest = DateTimeExtension.ParseHttpDate(response.Headers[HttpResponseHeader.Date])
-                .ToJsMilliseconds();
+                                        .ToJsMilliseconds();
 
             foreach (var offer in list.offers)
             {
@@ -258,17 +258,17 @@ namespace Unity.RenderStreaming.Signaling
         {
             HttpWebRequest request =
                 (HttpWebRequest)WebRequest.Create($"{m_url}/signaling/candidate?fromtime={m_lastTimeGetCandidateRequest}");
-            request.Method = "GET";
+            request.Method      = "GET";
             request.ContentType = "application/json";
             request.Headers.Add("Session-Id", m_sessionId);
             request.KeepAlive = false;
 
-            HttpWebResponse response = HTTPGetResponse(request);
+            HttpWebResponse               response   = HTTPGetResponse(request);
             CandidateContainerResDataList containers = HTTPParseJsonResponse<CandidateContainerResDataList>(response);
 
             if (containers == null) return false;
             m_lastTimeGetCandidateRequest = DateTimeExtension.ParseHttpDate(response.Headers[HttpResponseHeader.Date])
-                .ToJsMilliseconds();
+                                            .ToJsMilliseconds();
 
             foreach (var candidateContainer in containers.candidates)
             {

@@ -10,23 +10,23 @@ namespace Unity.RenderStreaming.Signaling
 {
     public class WebSocketSignaling : ISignaling
     {
-        private string m_url;
-        private float m_timeout;
-        private bool m_running;
-        private Thread m_signalingThread;
+        private string         m_url;
+        private float          m_timeout;
+        private bool           m_running;
+        private Thread         m_signalingThread;
         private AutoResetEvent m_wsCloseEvent;
-        private WebSocket m_webSocket;
+        private WebSocket      m_webSocket;
 
         public WebSocketSignaling(string url, float timeout)
         {
-            m_url = url;
-            m_timeout = timeout;
+            m_url          = url;
+            m_timeout      = timeout;
             m_wsCloseEvent = new AutoResetEvent(false);
         }
 
         public void Start()
         {
-            m_running = true;
+            m_running         = true;
             m_signalingThread = new Thread(WSManage);
             m_signalingThread.Start();
         }
@@ -54,11 +54,11 @@ namespace Unity.RenderStreaming.Signaling
         {
             DescData data = new DescData();
             data.connectionId = connectionId;
-            data.sdp = answer.sdp;
-            data.type = "answer";
+            data.sdp          = answer.sdp;
+            data.type         = "answer";
 
             RoutedMessage<DescData> routedMessage = new RoutedMessage<DescData>();
-            routedMessage.to = connectionId;
+            routedMessage.to   = connectionId;
             routedMessage.data = data;
             routedMessage.type = "answer";
 
@@ -68,13 +68,13 @@ namespace Unity.RenderStreaming.Signaling
         public void SendCandidate(string connectionId, RTCIceCandidate candidate)
         {
             CandidateData data = new CandidateData();
-            data.connectionId = connectionId;
-            data.candidate = candidate.candidate;
-            data.sdpMLineIndex = candidate.sdpMLineIndex;
-            data.sdpMid = candidate.sdpMid;
+            data.connectionId  = connectionId;
+            data.candidate     = candidate.Candidate;
+            data.sdpMLineIndex = candidate.SdpMLineIndex ?? 0;
+            data.sdpMid        = candidate.SdpMid;
 
             RoutedMessage<CandidateData> routedMessage = new RoutedMessage<CandidateData>();
-            routedMessage.to = connectionId;
+            routedMessage.to   = connectionId;
             routedMessage.data = data;
             routedMessage.type = "candidate";
 
@@ -104,10 +104,10 @@ namespace Unity.RenderStreaming.Signaling
                     SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12;
             }
 
-            m_webSocket.OnOpen += WSConnected;
+            m_webSocket.OnOpen    += WSConnected;
             m_webSocket.OnMessage += WSProcessMessage;
-            m_webSocket.OnError += WSError;
-            m_webSocket.OnClose += WSClosed;
+            m_webSocket.OnError   += WSError;
+            m_webSocket.OnClose   += WSClosed;
 
             Monitor.Enter(m_webSocket);
 
@@ -122,7 +122,7 @@ namespace Unity.RenderStreaming.Signaling
 
             try
             {
-                var routedMessage = JsonUtility.FromJson<RoutedMessage<SignalingMessage>>(content);
+                var routedMessage = JsonUtility.FromJson<RoutedMessage<SignalingMessage> >(content);
 
                 SignalingMessage msg;
                 if (!string.IsNullOrEmpty(routedMessage.type))
@@ -143,7 +143,7 @@ namespace Unity.RenderStreaming.Signaling
                         {
                             DescData offer = new DescData();
                             offer.connectionId = routedMessage.from;
-                            offer.sdp = msg.sdp;
+                            offer.sdp          = msg.sdp;
 
                             OnOffer?.Invoke(this, offer);
                         }
@@ -158,10 +158,10 @@ namespace Unity.RenderStreaming.Signaling
                     if (!string.IsNullOrEmpty(routedMessage.from))
                     {
                         CandidateData candidate = new CandidateData();
-                        candidate.connectionId = routedMessage.from;
-                        candidate.candidate = msg.candidate;
+                        candidate.connectionId  = routedMessage.from;
+                        candidate.candidate     = msg.candidate;
                         candidate.sdpMLineIndex = msg.sdpMLineIndex;
-                        candidate.sdpMid = msg.sdpMid;
+                        candidate.sdpMid        = msg.sdpMid;
 
                         OnIceCandidate?.Invoke(this, candidate);
                     }
@@ -171,7 +171,7 @@ namespace Unity.RenderStreaming.Signaling
                     }
                 }
             }
-            catch (Exception ex)
+            catch(Exception ex)
             {
                 Debug.LogError("Signaling: Failed to parse message: " + ex);
             }

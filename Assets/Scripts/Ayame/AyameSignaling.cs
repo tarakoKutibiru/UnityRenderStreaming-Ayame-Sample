@@ -13,12 +13,12 @@ public class AyameSignaling : ISignaling
 {
     public delegate void OnAcceptHandler(AyameSignaling signaling);
 
-    private string m_url;
-    private float m_timeout;
-    private bool m_running;
-    private Thread m_signalingThread;
+    private string         m_url;
+    private float          m_timeout;
+    private bool           m_running;
+    private Thread         m_signalingThread;
     private AutoResetEvent m_wsCloseEvent;
-    private WebSocket m_webSocket;
+    private WebSocket      m_webSocket;
 
     public string m_signalingKey { get; private set; }
     public string m_roomId { get; private set; }
@@ -26,16 +26,16 @@ public class AyameSignaling : ISignaling
 
     public AyameSignaling(string url, string signalingKey, string roomId, float timeout)
     {
-        this.m_url = url;
+        this.m_url          = url;
         this.m_signalingKey = signalingKey;
-        this.m_roomId = roomId;
-        this.m_timeout = timeout;
+        this.m_roomId       = roomId;
+        this.m_timeout      = timeout;
         this.m_wsCloseEvent = new AutoResetEvent(false);
     }
 
     public void Start()
     {
-        this.m_running = true;
+        this.m_running    = true;
         m_signalingThread = new Thread(WSManage);
         m_signalingThread.Start();
     }
@@ -47,7 +47,7 @@ public class AyameSignaling : ISignaling
     }
 
     public event OnAcceptHandler OnAccept;
-    public event OnOfferHandler OnOffer;
+    public event OnOfferHandler  OnOffer;
 #pragma warning disable 0067
     public event OnAnswerHandler OnAnswer;
 #pragma warning restore 0067
@@ -75,9 +75,9 @@ public class AyameSignaling : ISignaling
         CandidateMessage candidateMessage = new CandidateMessage();
 
         Ice ice = new Ice();
-        ice.candidate = candidate.candidate;
-        ice.sdpMid = candidate.sdpMid;
-        ice.sdpMLineIndex = candidate.sdpMLineIndex;
+        ice.candidate     = candidate.Candidate;
+        ice.sdpMid        = candidate.SdpMid;
+        ice.sdpMLineIndex = candidate.SdpMLineIndex ?? 0;
 
         candidateMessage.ice = ice;
         this.WSSend(JsonUtility.ToJson(candidateMessage));
@@ -106,10 +106,10 @@ public class AyameSignaling : ISignaling
                 SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12;
         }
 
-        m_webSocket.OnOpen += WSConnected;
+        m_webSocket.OnOpen    += WSConnected;
         m_webSocket.OnMessage += WSProcessMessage;
-        m_webSocket.OnError += WSError;
-        m_webSocket.OnClose += WSClosed;
+        m_webSocket.OnError   += WSError;
+        m_webSocket.OnClose   += WSClosed;
 
         Monitor.Enter(m_webSocket);
 
@@ -124,80 +124,80 @@ public class AyameSignaling : ISignaling
 
         try
         {
-            var message = JsonUtility.FromJson<Message>(content);
-            string type = message.type;
+            var    message = JsonUtility.FromJson<Message>(content);
+            string type    = message.type;
 
             switch (type)
             {
                 case "accept":
-                    {
-                        AcceptMessage acceptMessage = JsonUtility.FromJson<AcceptMessage>(content);
-                        this.m_acceptMessage = acceptMessage;
-                        this.OnAccept?.Invoke(this);
-                        break;
-                    }
+                {
+                    AcceptMessage acceptMessage = JsonUtility.FromJson<AcceptMessage>(content);
+                    this.m_acceptMessage = acceptMessage;
+                    this.OnAccept?.Invoke(this);
+                    break;
+                }
 
                 case "offer":
-                    {
-                        OfferMessage offerMessage = JsonUtility.FromJson<OfferMessage>(content);
-                        DescData descData = new DescData();
-                        descData.connectionId = this.m_acceptMessage.connectionId;
-                        descData.sdp = offerMessage.sdp;
+                {
+                    OfferMessage offerMessage = JsonUtility.FromJson<OfferMessage>(content);
+                    DescData     descData     = new DescData();
+                    descData.connectionId = this.m_acceptMessage.connectionId;
+                    descData.sdp          = offerMessage.sdp;
 
-                        this.OnOffer?.Invoke(this, descData);
+                    this.OnOffer?.Invoke(this, descData);
 
-                        break;
-                    }
+                    break;
+                }
 
                 case "answer":
-                    {
-                        AnswerMessage answerMessage = JsonUtility.FromJson<AnswerMessage>(content);
-                        DescData descData = new DescData();
-                        descData.connectionId = this.m_acceptMessage.connectionId;
-                        descData.sdp = answerMessage.sdp;
+                {
+                    AnswerMessage answerMessage = JsonUtility.FromJson<AnswerMessage>(content);
+                    DescData      descData      = new DescData();
+                    descData.connectionId = this.m_acceptMessage.connectionId;
+                    descData.sdp          = answerMessage.sdp;
 
-                        this.OnAnswer?.Invoke(this, descData);
+                    this.OnAnswer?.Invoke(this, descData);
 
-                        break;
-                    }
+                    break;
+                }
 
                 case "candidate":
-                    {
-                        CandidateMessage candidateMessage = JsonUtility.FromJson<CandidateMessage>(content);
+                {
+                    CandidateMessage candidateMessage = JsonUtility.FromJson<CandidateMessage>(content);
 
-                        CandidateData candidateData = new CandidateData();
-                        candidateData.connectionId = this.m_acceptMessage.connectionId;
-                        candidateData.candidate = candidateMessage.ice.candidate;
-                        candidateData.sdpMLineIndex = candidateMessage.ice.sdpMLineIndex;
-                        candidateData.sdpMid = candidateMessage.ice.sdpMid;
+                    CandidateData candidateData = new CandidateData();
+                    candidateData.connectionId  = this.m_acceptMessage.connectionId;
+                    candidateData.candidate     = candidateMessage.ice.candidate;
+                    candidateData.sdpMLineIndex = candidateMessage.ice.sdpMLineIndex;
+                    candidateData.sdpMid        = candidateMessage.ice.sdpMid;
 
-                        this.OnIceCandidate?.Invoke(this, candidateData);
+                    this.OnIceCandidate?.Invoke(this, candidateData);
 
-                        break;
-                    }
+                    break;
+                }
 
                 case "ping":
-                    {
-                        PongMessage pongMessage = new PongMessage();
-                        this.WSSend(JsonUtility.ToJson(pongMessage));
+                {
+                    PongMessage pongMessage = new PongMessage();
+                    this.WSSend(JsonUtility.ToJson(pongMessage));
 
-                        break;
-                    }
+                    break;
+                }
 
                 case "bye":
-                    {
-                        // TODO:
-                        break;
-                    }
+                {
+                    // TODO:
+                    break;
+                }
 
                 default:
-                    {
-                        Debug.LogError("Signaling: Received message from unknown peer");
-                        break;
-                    }
+                {
+                    Debug.LogError("Signaling: Received message from unknown peer");
+                    break;
+                }
             }
         }
-        catch (Exception ex)
+        catch(Exception ex)
         {
             Debug.LogError("Signaling: Failed to parse message: " + ex);
         }
@@ -206,7 +206,7 @@ public class AyameSignaling : ISignaling
     private void WSConnected(object sender, EventArgs e)
     {
         RegisterMessage registerMessage = new RegisterMessage();
-        registerMessage.roomId = this.m_roomId;
+        registerMessage.roomId       = this.m_roomId;
         registerMessage.signalingKey = this.m_signalingKey;
 
         Debug.Log("Signaling: WS connected.");

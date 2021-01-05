@@ -13,13 +13,13 @@ namespace Unity.RenderStreaming
     using DataChannelDictionary = Dictionary<int, RTCDataChannel>;
 
     [Serializable]
-    public class ButtonClickEvent : UnityEngine.Events.UnityEvent<int> { }
+    public class ButtonClickEvent : UnityEngine.Events.UnityEvent<int> {}
 
     [Serializable]
     public class ButtonClickElement
     {
         [Tooltip("Specifies the ID on the HTML")]
-        public int elementId;
+        public int              elementId;
         public ButtonClickEvent click;
     }
 
@@ -55,14 +55,14 @@ namespace Unity.RenderStreaming
 #pragma warning restore 0649
 
         private AyameSignaling m_signaling;
-        private readonly Dictionary<string, RTCPeerConnection> m_mapConnectionIdAndPeer = new Dictionary<string, RTCPeerConnection>();
-        private readonly Dictionary<RTCPeerConnection, DataChannelDictionary> m_mapPeerAndChannelDictionary = new Dictionary<RTCPeerConnection, DataChannelDictionary>();
-        private readonly Dictionary<RemoteInput, SimpleCameraController> m_remoteInputAndCameraController = new Dictionary<RemoteInput, SimpleCameraController>();
-        private readonly Dictionary<RTCDataChannel, RemoteInput> m_mapChannelAndRemoteInput = new Dictionary<RTCDataChannel, RemoteInput>();
-        private readonly List<SimpleCameraController> m_listController = new List<SimpleCameraController>();
-        private readonly List<VideoStreamTrack> m_listVideoStreamTrack = new List<VideoStreamTrack>();
-        private MediaStream m_audioStream;
-        private DefaultInput m_defaultInput;
+        private readonly Dictionary<string, RTCPeerConnection>                m_mapConnectionIdAndPeer         = new Dictionary<string, RTCPeerConnection>();
+        private readonly Dictionary<RTCPeerConnection, DataChannelDictionary> m_mapPeerAndChannelDictionary    = new Dictionary<RTCPeerConnection, DataChannelDictionary>();
+        private readonly Dictionary<RemoteInput, SimpleCameraController>      m_remoteInputAndCameraController = new Dictionary<RemoteInput, SimpleCameraController>();
+        private readonly Dictionary<RTCDataChannel, RemoteInput>              m_mapChannelAndRemoteInput       = new Dictionary<RTCDataChannel, RemoteInput>();
+        private readonly List<SimpleCameraController> m_listController       = new List<SimpleCameraController>();
+        private readonly List<VideoStreamTrack>       m_listVideoStreamTrack = new List<VideoStreamTrack>();
+        private MediaStream      m_audioStream;
+        private DefaultInput     m_defaultInput;
         private RTCConfiguration m_conf;
 
         public static RenderStreaming Instance { get; private set; }
@@ -94,7 +94,7 @@ namespace Unity.RenderStreaming
         {
             m_audioStream = Unity.WebRTC.Audio.CaptureStream();
 
-            m_conf = default;
+            m_conf            = default;
             m_conf.iceServers = iceServers;
             StartCoroutine(WebRTC.WebRTC.Update());
         }
@@ -105,9 +105,9 @@ namespace Unity.RenderStreaming
             {
                 this.m_signaling = new AyameSignaling(urlSignaling, signalingKey, roomId, interval);
 
-                this.m_signaling.OnAccept += OnAccept;
-                this.m_signaling.OnAnswer += OnAnswer;
-                this.m_signaling.OnOffer += OnOffer;
+                this.m_signaling.OnAccept       += OnAccept;
+                this.m_signaling.OnAnswer       += OnAnswer;
+                this.m_signaling.OnOffer        += OnOffer;
                 this.m_signaling.OnIceCandidate += OnIceCandidate;
             }
             this.m_signaling.Start();
@@ -145,15 +145,15 @@ namespace Unity.RenderStreaming
 
         RTCConfiguration GetSelectedSdpSemantics()
         {
-            RTCConfiguration config = default;
-            var rtcIceServers = new List<RTCIceServer>();
+            RTCConfiguration config        = default;
+            var              rtcIceServers = new List<RTCIceServer>();
 
             foreach (var iceServer in this.m_signaling.m_acceptMessage.iceServers)
             {
                 RTCIceServer rtcIceServer = new RTCIceServer();
-                rtcIceServer.urls = iceServer.urls.ToArray();
-                rtcIceServer.username = iceServer.username;
-                rtcIceServer.credential = iceServer.credential;
+                rtcIceServer.urls           = iceServer.urls.ToArray();
+                rtcIceServer.username       = iceServer.username;
+                rtcIceServer.credential     = iceServer.credential;
                 rtcIceServer.credentialType = RTCIceCredentialType.OAuth;
 
                 rtcIceServers.Add(rtcIceServer);
@@ -171,7 +171,7 @@ namespace Unity.RenderStreaming
             bool shouldSendOffer = acceptMessage.isExistClient;
 
             var configuration = GetSelectedSdpSemantics();
-            this.iceServers = configuration.iceServers;
+            this.iceServers   = configuration.iceServers;
             m_conf.iceServers = this.iceServers;
 
             // wait Offer
@@ -184,7 +184,7 @@ namespace Unity.RenderStreaming
         {
             RTCSessionDescription _desc;
             _desc.type = RTCSdpType.Offer;
-            _desc.sdp = e.sdp;
+            _desc.sdp  = e.sdp;
             var connectionId = e.connectionId;
             if (m_mapConnectionIdAndPeer.ContainsKey(connectionId))
             {
@@ -207,7 +207,7 @@ namespace Unity.RenderStreaming
                     m_mapConnectionIdAndPeer.Remove(e.connectionId);
                 }
             });
-            //make video bit rate starts at 16000kbits, and 160000kbits at max.
+            // make video bit rate starts at 16000kbits, and 160000kbits at max.
             string pattern = @"(a=fmtp:\d+ .*level-asymmetry-allowed=.*)\r\n";
             _desc.sdp = Regex.Replace(_desc.sdp, pattern, "$1;x-google-start-bitrate=16000;x-google-max-bitrate=160000\r\n");
             pc.SetRemoteDescription(ref _desc);
@@ -221,7 +221,7 @@ namespace Unity.RenderStreaming
             }
 
             RTCAnswerOptions options = default;
-            var op = pc.CreateAnswer(ref options);
+            var              op      = pc.CreateAnswer(ref options);
             while (op.MoveNext())
             {
             }
@@ -231,7 +231,7 @@ namespace Unity.RenderStreaming
                 return;
             }
 
-            var desc = op.Desc;
+            var desc        = op.Desc;
             var opLocalDesc = pc.SetLocalDescription(ref desc);
             while (opLocalDesc.MoveNext())
             {
@@ -247,7 +247,7 @@ namespace Unity.RenderStreaming
 
         void OnAnswer(ISignaling signaling, DescData e)
         {
-            // TODO: Answer sdp SetRemoteDescription 
+            // TODO: Answer sdp SetRemoteDescription
         }
 
         void OnIceCandidate(ISignaling signaling, CandidateData e)
@@ -257,12 +257,13 @@ namespace Unity.RenderStreaming
                 return;
             }
 
-            RTCIceCandidate​ _candidate = default;
-            _candidate.candidate = e.candidate;
-            _candidate.sdpMLineIndex = e.sdpMLineIndex;
-            _candidate.sdpMid = e.sdpMid;
+            RTCIceCandidateInit rtcIceCandidateInit = new RTCIceCandidateInit();
+            rtcIceCandidateInit.candidate     = e.candidate;
+            rtcIceCandidateInit.sdpMLineIndex = e.sdpMLineIndex;
+            rtcIceCandidateInit.sdpMid        = e.sdpMid;
+            RTCIceCandidate _candidate = new RTCIceCandidate(rtcIceCandidateInit);
 
-            pc.AddIceCandidate(ref _candidate);
+            pc.AddIceCandidate(_candidate);
         }
 
         void OnDataChannel(RTCPeerConnection pc, RTCDataChannel channel)
@@ -287,18 +288,18 @@ namespace Unity.RenderStreaming
 
             m_mapChannelAndRemoteInput.Add(channel, input);
             channel.OnMessage = bytes => m_mapChannelAndRemoteInput[channel].ProcessInput(bytes);
-            channel.OnClose = () => OnCloseChannel(channel);
+            channel.OnClose   = () => OnCloseChannel(channel);
 
             // find controller that not assigned remote input
             SimpleCameraController controller = m_listController
-                .FirstOrDefault(_controller => !m_remoteInputAndCameraController.ContainsValue(_controller));
+                                                .FirstOrDefault(_controller => !m_remoteInputAndCameraController.ContainsValue(_controller));
 
             if (controller != null)
             {
                 controller.SetInput(input);
                 m_remoteInputAndCameraController.Add(input, controller);
 
-                byte index = (byte)m_listController.IndexOf(controller);
+                byte   index = (byte)m_listController.IndexOf(controller);
                 byte[] bytes = { (byte)UnityEventType.SwitchVideo, index };
                 channel.Send(bytes);
             }
